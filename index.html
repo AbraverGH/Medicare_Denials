@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UB-04 Claim Inspector & FISS Reason Code Suite</title>
+  <style>
+    :root {
+      --ub-red: #c0392b;
+      --ub-border: #d9534f;
+      --ub-bg: #fffefe;
+      --highlight-color: #fff3cd;
+      --highlight-border: #f39c12;
+      --navy-ink: #000080;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background-color: #f4f6f9;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* Control Panel */
+    .controls-panel {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .controls-panel h2 {
+      margin-top: 0;
+      color: #2c3e50;
+    }
+
+    .control-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 15px;
+    }
+
+    select {
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      min-width: 480px;
+      font-weight: bold;
+    }
+
+    button.clear-btn {
+      background-color: #95a5a6;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s ease;
+    }
+
+    button.clear-btn:hover {
+      background-color: #7f8c8d;
+    }
+
+    /* Detailed Explanation Panel */
+    .denial-description {
+      margin-top: 15px;
+      padding: 15px;
+      background-color: #eef7fc;
+      border-left: 5px solid #3498db;
+      font-size: 14px;
+      line-height: 1.5;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .denial-description h3 {
+      margin: 0 0 8px 0;
+      color: #2c3e50;
+    }
+
+    .denial-description .system-text {
+      font-family: monospace;
+      background: #e2f0d9;
+      padding: 6px 10px;
+      border-radius: 4px;
+      color: #1e4620;
+      margin: 8px 0;
+      font-size: 12px;
+    }
+
+    .denial-description ul {
+      margin: 5px 0;
+      padding-left: 20px;
+    }
+
+    /* UB-04 Form Grid Styles */
+    .ub04-form {
+      background-color: var(--ub-bg);
+      border: 2px solid var(--ub-red);
+      padding: 15px;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .form-header-title {
+      text-align: center;
+      color: var(--ub-red);
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .grid-row {
+      display: flex;
+      width: 100%;
+    }
+
+    .field {
+      border: 1px solid var(--ub-border);
+      padding: 4px 6px;
+      box-sizing: border-box;
+      position: relative;
+      background-color: #fff;
+      transition: all 0.3s ease;
+    }
+
+    .field label {
+      display: block;
+      color: var(--ub-red);
+      font-size: 9px;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .field input, .field textarea {
+      width: 100%;
+      border: none;
+      outline: none;
+      font-family: monospace;
+      font-size: 12px;
+      color: var(--navy-ink);
+      background: transparent;
+      font-weight: bold;
+    }
+
+    /* Highlight Animation for Target Form Locators */
+    .field.highlighted, td.highlighted, th.highlighted {
+      background-color: var(--highlight-color) !important;
+      border: 2px solid var(--highlight-border) !important;
+      animation: pulse 1.5s infinite alternate;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 2px var(--highlight-border); }
+      100% { box-shadow: 0 0 10px var(--highlight-border); }
+    }
+
+    /* Line Items Table (FL 42 - FL 48) */
+    .line-items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: -1px;
+    }
+
+    .line-items-table th {
+      border: 1px solid var(--ub-border);
+      color: var(--ub-red);
+      font-size: 9px;
+      padding: 4px;
+      text-align: left;
+    }
+
+    .line-items-table td {
+      border: 1px solid var(--ub-border);
+      padding: 2px;
+      transition: all 0.3s ease;
+    }
+
+    .line-items-table input {
+      width: 100%;
+      border: none;
+      outline: none;
+      font-family: monospace;
+      font-size: 11px;
+      color: var(--navy-ink);
+      font-weight: bold;
+      box-sizing: border-box;
+      background: transparent;
+    }
+
+    /* Flex Layout Helper Classes */
+    .flex-1 { flex: 1; }
+    .flex-2 { flex: 2; }
+    .flex-3 { flex: 3; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Interactive Control Panel with 22 FISS Reason Codes -->
+  <div class="controls-panel">
+    <h2>UB-04 Claim Inspector & FISS Reason Code Suite</h2>
+    <p>Select a Medicare SNF DDE Reason Code to highlight target Form Locators (FL) and view technical fix protocols:</p>
+    
+    <div class="control-group">
+      <select id="denialSelect" onchange="processDenialSelection()">
+        <option value="">-- Select FISS Reason Code --</option>
+        <option value="34963">34963 - Continuous Skilled Day Count Check / Level of Care (FL 42, 46)</option>
+        <option value="31398">31398 - Occurrence Span 74/76 Mismatch Against Non-Covered Days (FL 35/36, 48)</option>
+        <option value="E51#U">E51#U - Invalid Character Format in HIPPS/Case-Mix Rate Line (FL 44)</option>
+        <option value="38119">38119 - Out-of-Sequence Claim Submission / Skipping Months (FL 4, 6)</option>
+        <option value="15202">15202 - Accommodation Days / Line-Item Unit Mismatch (FL 42, 46)</option>
+        <option value="W2059">W2059 - Medical Review Processing Edit / Complex Audit (Electronic ADR / FL 80)</option>
+        <option value="12206">12206 - Beneficiary Eligibility Date Discrepancy (FL 6)</option>
+        <option value="W2067">W2067 - Inpatient Rehabilitation / Skilled Level Audit Warning (FL 44)</option>
+        <option value="U5065">U5065 - Inactive or Invalid Beneficiary Identifier / MBI (FL 60)</option>
+        <option value="31025">31025 - Outpatient Therapy Cap Modifier / Discipline Designation (FL 44)</option>
+        <option value="U5606">U5606 - Hospice Overlap Mismatch Against SNF Claims (FL 18-28, 39-41)</option>
+        <option value="38007">38007 - Duplicate Claim Submission for Processed Window (FL 4, 6)</option>
+        <option value="38200">38200 - Patient Stay Overlap / Conflicting Stay History (FL 6)</option>
+        <option value="7RACA">7RACA - Invalid Telehealth / Distance Service Component Format (FL 44)</option>
+        <option value="39508">39508 - Discharge Status Code Mismatch Against Next Claim (FL 17)</option>
+        <option value="U5233">U5233 - Medicare Advantage Enrollment Plan Conflict (FL 50, 58)</option>
+        <option value="11503">11503 - Invalid Type of Bill Code Combination (FL 4)</option>
+        <option value="34540">34540 - Primary Worker's Comp / Liability Claim Overlap (FL 18-28, 39-41, 50)</option>
+        <option value="38307">38307 - Qualifying Inpatient Hospital Stay Mismatch (FL 35/36)</option>
+        <option value="C7010">C7010 - Preventative Service Multi-Line Coding Conflict (FL 44)</option>
+        <option value="U5235">U5235 - Medicare Part B Only Enrollment Plan Conflict (FL 4, 50)</option>
+      </select>
+      
+      <button class="clear-btn" onclick="clearHighlights()">Clear Highlights</button>
+    </div>
+
+    <div id="denial-info" class="denial-description">
+      Select a reason code from the drop-down menu above to see the precise UB-04 Form Locators flagged and the resolution protocol.
+    </div>
+  </div>
+
+  <!-- FULL UB-04 INSTITUTIONAL FORM GRID -->
+  <div class="ub04-form">
+    <div class="form-header-title">Uniform Bill (UB-04 / CMS-1450)</div>
+
+    <!-- Row 1: FL 1 - FL 4 -->
+    <div class="grid-row">
+      <div class="field flex-3" id="fl1">
+        <label>1 Billing Provider Name, Address, City, State, ZIP</label>
+        <textarea rows="3">EASTSIDE SKILLED NURSING & REHAB&#10;400 MEDICAL CENTER PARKWAY&#10;PROVIDENCE RI 02920</textarea>
+      </div>
+      <div class="field flex-1" id="fl2">
+        <label>2 Pay-To Name / Address</label>
+        <input type="text" value="">
+      </div>
+      <div class="field flex-1" id="fl3a">
+        <label>3a Patient Control No.</label>
+        <input type="text" value="PAT-98421">
+      </div>
+      <div class="field flex-1" id="fl4">
+        <label>4 Type of Bill</label>
+        <input type="text" value="211">
+      </div>
+    </div>
+
+    <!-- Row 2: FL 5 - FL 9 -->
+    <div class="grid-row">
+      <div class="field flex-2" id="fl5">
+        <label>5 Fed Tax No.</label>
+        <input type="text" value="12-3456789">
+      </div>
+      <div class="field flex-3" id="fl6">
+        <label>6 Statement Covers Period (From - Through)</label>
+        <input type="text" value="10/01/2026 - 10/31/2026">
+      </div>
+      <div class="field flex-1" id="fl8">
+        <label>8 Patient Name</label>
+        <input type="text" value="DOE, JOHN">
+      </div>
+      <div class="field flex-1" id="fl9">
+        <label>9 Patient Address</label>
+        <input type="text" value="123 MAIN ST">
+      </div>
+    </div>
+
+    <!-- Row 3: FL 10 - FL 28 -->
+    <div class="grid-row">
+      <div class="field flex-1" id="fl10">
+        <label>10 Birthdate</label>
+        <input type="text" value="04/12/1948">
+      </div>
+      <div class="field flex-1" id="fl11">
+        <label>** ***</label>
+        <input type="text" value="M">
+      </div>
+      <div class="field flex-1" id="fl12">
+        <label>12 Admission Date</label>
+        <input type="text" value="10/01/2026">
+      </div>
+      <div class="field flex-1" id="fl14">
+        <label>14 Priority</label>
+        <input type="text" value="1">
+      </div>
+      <div class="field flex-1" id="fl17">
+        <label>17 Patient Status</label>
+        <input type="text" value="30">
+      </div>
+      <div class="field flex-2" id="fl18_28">
+        <label>18-28 Condition Codes</label>
+        <input type="text" value="">
+      </div>
+    </div>
+
+    <!-- Row 4: FL 31 - FL 41 (Occurrence Spans & Value Codes) -->
+    <div class="grid-row">
+      <div class="field flex-1" id="fl31_34">
+        <label>31-34 Occurrence Codes & Dates</label>
+        <input type="text" value="">
+      </div>
+      <div class="field flex-1" id="fl35">
+        <label>35 Occurrence Span Code & Dates</label>
+        <input type="text" value="74  10/10/2026 - 10/12/2026">
+      </div>
+      <div class="field flex-1" id="fl36">
+        <label>36 Occurrence Span Code & Dates</label>
+        <input type="text" value="">
+      </div>
+      <div class="field flex-1" id="fl39_41">
+        <label>39-41 Value Codes & Amounts</label>
+        <input type="text" value="">
+      </div>
+    </div>
+
+    <!-- Line Items Table: FL 42 - FL 48 -->
+    <table class="line-items-table">
+      <thead>
+        <tr>
+          <th style="width: 10%;" id="th_fl42">42 Rev. Cd.</th>
+          <th style="width: 35%;" id="th_fl44">44 HCPCS / Rate / HIPPS Code</th>
+          <th style="width: 15%;">45 Serv. Date</th>
+          <th style="width: 10%;" id="th_fl46">46 Serv. Units</th>
+          <th style="width: 15%;">47 Total Charges</th>
+          <th style="width: 15%;" id="th_fl48">48 Non-Covered Units</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td id="fl42_line1"><input type="text" value="0022"></td>
+          <td id="fl44_line1"><input type="text" value="NBAE1"></td>
+          <td><input type="text" value="100126"></td>
+          <td id="fl46_line1"><input type="text" value="31"></td>
+          <td><input type="text" value="$14,500.00"></td>
+          <td id="fl48_line1"><input type="text" value="0"></td>
+        </tr>
+        <tr>
+          <td id="fl42_line2"><input type="text" value="0120"></td>
+          <td id="fl44_line2"><input type="text" value="97110"></td>
+          <td><input type="text" value="100126"></td>
+          <td id="fl46_line2"><input type="text" value="31"></td>
+          <td><input type="text" value="$8,400.00"></td>
+          <td id="fl48_line2"><input type="text" value="2"></td>
+        </tr>
+        <tr>
+          <td><input type="text" value="0001"></td>
+          <td><input type="text" value="TOTAL"></td>
+          <td><input type="text" value=""></td>
+          <td><input type="text" value="62"></td>
+          <td><input type="text" value="$22,900.00"></td>
+          <td><input type="text" value="2"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Row 5: FL 50 - FL 65 (Payer Info) -->
+    <div class="grid-row" style="margin-top: 10px;">
+      <div class="field flex-2" id="fl50">
+        <label>50 Payer Name</label>
+        <input type="text" value="MEDICARE PRIMARY (TOB 211)">
+      </div>
+      <div class="field flex-2" id="fl54">
+        <label>54 Prior Payments</label>
+        <input type="text" value="">
+      </div>
+      <div class="field flex-2" id="fl58">
+        <label>58 Insured's Name</label>
+        <input type="text" value="DOE, JOHN">
+      </div>
+      <div class="field flex-2" id="fl60">
+        <label>60 Insured's Unique ID (MBI)</label>
+        <input type="text" value="1EG4TE5MK72">
+      </div>
+    </div>
+
+    <!-- Row 6: FL 67 - FL 80 (Diagnoses, Providers & Remarks) -->
+    <div class="grid-row">
+      <div class="field flex-2" id="fl67">
+        <label>67 Principal Diagnosis Code</label>
+        <input type="text" value="S72.001A">
+      </div>
+      <div class="field flex-2" id="fl67a">
+        <label>67A Other Diagnosis Codes</label>
+        <input type="text" value="I10, Z74.01">
+      </div>
+      <div class="field flex-1" id="fl76">
+        <label>76 Attending NPI</label>
+        <input type="text" value="1982736451">
+      </div>
+      <div class="field flex-2" id="fl80">
+        <label>80 Remarks</label>
+        <input type="text" value="">
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function clearHighlights() {
+    document.querySelectorAll('.field, td, th').forEach(el => {
+      el.classList.remove('highlighted');
+    });
+    document.getElementById('denialSelect').value = "";
+    document.getElementById('denial-info').innerHTML = "Select a reason code from the drop-down menu above to see the precise UB-04 Form Locators flagged and the resolution protocol.";
+  }
+
+  function clearHighlightsWithoutReset() {
+    document.querySelectorAll('.field, td, th').forEach(el => {
+      el.classList.remove('highlighted');
+    });
+  }
+
+  function processDenialSelection() {
+    const code = document.getElementById('denialSelect').value;
+    clearHighlightsWithoutReset();
+    const infoBox = document.getElementById('denial-info');
+
+    switch (code) {
+      case '34963':
+        document.getElementById('th_fl42').classList.add('highlighted');
+        document.getElementById('fl42_line1').classList.add('highlighted');
+        document.getElementById('th_fl46').classList.add('highlighted');
+        document.getElementById('fl46_line1').classList.add('highlighted');
+        infoBox.innerHTML = `
+          <h3>FISS Reason Code 34963: Continuous Skilled Day Count Check / Level of Care Discrepancy[cite: 3]</h3>
+          <div class="system-text">SKILLED LEVEL OF CARE REVENUE LINES EXCEED ELIGIBLE BENEFIT CALENDAR BALANCE OR REQUIRE COVERED BED STAY MATCH.[cite: 3]</div>
+          <p><strong>Common Root Cause:</strong> Billed revenue code 0022 lines do not match the clinical criteria period, or the total number of consecutive skilled care assessment days does not align with the MDS tracking file under PDPM[cite: 3].</p>
+          <p><strong>Technical Correction Protocol:</strong></p>
+          <ul>
+            <li>Verify the Assessment Reference Date (ARD) on the corresponding MDS document[cite: 3].</li>
+            <li>Cross-examine the service unit column in <strong>FL 46</strong> to confirm that billed line items align with your covered clinical window[cite: 3].</li>
+            <li>Adjust revenue line units downward if any patient days were deemed non-skilled by the utilization review committee[cite: 3].</li>
+            <li>Re-key the claim fields and execute the F9 system command to recycle[cite: 3].</li>
+          </ul>`;
+        break;
+
+      case '31398':
+        document.getElementById('fl35').classList.add('highlighted');
+        document.getElementById('fl36').classList.add('highlighted');
+        document.getElementById('th_fl48').classList.add('highlighted');
+        document.getElementById('fl48_line1').classList.add('highlighted');
+        infoBox.innerHTML = `
+          <h3>FISS Reason Code 31398: Occurrence Span 74/76 Mismatch Against Non-Covered Days[cite: 3]</h3>
+          <div class="system-text">IF OCCURRENCE SPAN CODE 74 OR 76 IS PRESENT ON THE CLAIM THEN: 1. NON-COVERED DAYS MUST BE GREATER THAN ZERO, OR 2. IF NON-COVERED DAYS ARE NOT GREATER THAN ZERO, THE BILL TYPE MUST BE 32X OR 33X.[cite: 3]</div>
+          <p><strong>Common Root Cause:</strong> An Occurrence Span Code 74 (Leave of Absence) or 76 (Bed Hold) was added to track a gap in skilled coverage, but total header Non-Covered Days was left at zero[cite: 3].</p>
+          <p><strong>Technical Correction Protocol:</strong></p>
+          <ul>
+            <li>Locate date ranges typed next to Occurrence Span Code 74 or 76 in <strong>FL 35/36</strong>[cite: 3].</li>
+            <li>Calculate the exact number of calendar days the beneficiary spent away from the facility[cite: 3].</li>
+            <li>Update the Non-Covered Days box (<strong>FL 48</strong>) in the claim header/lines to reflect this exact computed count[cite: 3].</li>
+            <li>Deduct these days from your Covered Days total for mathematical reconciliation across the period[cite: 3].</li>
+          </ul>`;
+        break;
+
+      case 'E51#U':
+        document.getElementById('th_fl44').classList.add('highlighted');
+        document.getElementById('fl44_line1').classList.add('highlighted');
+        infoBox.innerHTML = `
+          <h3>FISS Reason Code E51#U: Invalid Character Format in HIPPS/Case-Mix Rate Line[cite: 3]</h3>
+          <div class="system-text">HIPPS RATE ALPHANUMERIC STRING CONTAINS UNRECOGNIZED SPECIAL CHARACTER SYMBOLS OR UNEXPECTED FIELD VALUE MARKS.[cite: 3]</div>
+          <p><strong>Common Root Cause:</strong> An invalid character or text symbol (such as #, @, or a blank space) was introduced into the 5-character HIPPS area in the electronic stream or clearinghouse parsing[cite: 3].</p>
+          <p><strong>Technical Correction Protocol:</strong></p>
+          <ul>
+            <li>Isolate the Revenue Code 0022 billing string in <strong>FL 44</strong> inside your DDE terminal[cite: 3].</li>
+            <li>Verify the 5-digit character code generated directly by your facility's MDS validation engine under PDPM[cite: 3].</li>
+            <li>Manually type over the corrupted position to clear out unauthorized punctuation symbols (like '#')[cite: 3].</li>
+            <li>Ensure the string matches canonical codes (e.g., NBAE1) and press F9[cite: 3].</li>
+          </ul>`;
+        break;
+
+      case '38119':
+        document.getElementById('fl4').classList.add('highlighted');
+        document.getElementById('fl6').classList.add('highlighted');
+        infoBox.innerHTML = `
+          <h3>FISS Reason Code 38119: Out-of-Sequence Claim Submission / Skipping Months[cite: 3]</h3>
+          <div class="system-text">BILLS FOR A CONTINUOUS STAY OR ADMISSION MUST BE SUBMITTED IN THE SAME SEQUENCE IN WHICH THE SERVICES ARE FURNISHED.[cite: 3]</div>
+          <p><strong>Common Root Cause:</strong> The claim was processed skipping a required month, creating an unbilled gap in a continuous SNF inpatient stay history[cite: 3].</p>
+          <p><strong>Technical Correction Protocol:</strong></p>
+          <ul>
+            <li>Check billing history in DDE to see if the previous month's claim is stuck in 'RTP' or 'Suspended' status[cite: 3].</li>
+            <li>Resolve any outstanding edits or corrections on that prior month's record first[cite: 3].</li>
+            <li>Once the previous month's claim processes and moves into paid status, re-transmit this subsequent claim[cite: 3].</li>
+          </ul>`;
+        break;
+
+      case '15202':
+        document.getElementById('th_fl42').classList.add('highlighted');
+        document.getElementById('fl42_line2').classList.add('highlighted');
+        document.getElementById('th_fl46').classList.add('highlighted');
+        document.getElementById('fl46_line2').classList.add('highlighted');
+        infoBox.innerHTML = `
+          <h3>FISS Reason Code 15202: Accommodation Days / Line-Item Unit Mismatch[cite: 3]</h3>
+          <div class="system-text">UNITS OF SERVICE: ON INPATIENT HOSPITAL OR SNF CLAIMS WITH COVERED DAYS GREATER THAN ZERO, THE ACCOMMODATION DAYS SHOWN WITH REVENUE CODES 10X THROUGH 21X... DO NOT EQUAL THE COVERED DAYS.[cite: 3]</div>
+          <p><strong>Common Root Cause:</strong> Total accommodation service units listed on room-and-board lines (Revenue Codes 011x-021x) do not equal the final summary count of Covered Days in the header[cite: 3].</p>
+          <p><strong>Technical Correction Protocol:</strong></p>
+          <ul>
+            <li>Verify total Covered Days in the header summary[cite: 3].</li>
+            <li>Navigate to Service Units (<strong>FL 46</strong>) for your accommodation line (<strong>FL 42</strong>, e.g., 0120)[cite: 3].</li>
+            <li>Re-calculate units: individual line-item room units must perfectly equal header covered days (accounting for non-covered discharge days)[cite: 3].</li>
+          </ul>`;
+        break;
+
+      case 'W2059':
+        document.getElementById('fl80').classList.add('highlighted');
+        infoBox.innerHTML = `
+          <h3>FISS Reason Code W2059: Medical Review Processing Edit / Complex Audit[cite: 3]</h3>
+          <div class="system-text">CLAIM REVIEWS REVEAL EXTENDED DISCIPLINE INTERVENTIONS OR TRIGGERED INTENSITY THRESHOLDS FOR REHABILITATION INTERVENTIONS.[cite: 3]</div>
+          <p><strong>Common Root Cause:</strong> The claim was flagged by local Medicare contractor safety thresholds, requiring comprehensive manual medical review before funds can be released[cite: 3].</p>
+          <p><strong>Technical Correction Protocol:</strong></p>
+          <ul>
+            <li>Monitor the DDE status location queue for an open Additional Documentation Request (ADR) notification[cite: 3].</li>
+            <li>Compile requested clinical records, including nursing reports, physician notes, and daily therapy logs[cite: 3].</li>
+            <li>Verify all pages contain legible doctor signatures and beneficiary IDs, then transmit via esMD or registered mail within 45 days[cite: 3].</li>
+          </ul>`;
+        break;
+
+      case '12206':
+        document.getElementById('fl6').classList.add('highlighted');
+        infoBox.innerHTML = `
+          <h3>FISS Reason Code 12206: Beneficiary Eligibility Date Discrepancy[cite: 3]</h3>
+          <div class="system-text">THE STATEMENT FROM DATE IS PRIOR TO THE BENEFICIARY'S ENTITLEMENT EFFECTIVE DATE FOR MEDICAL BENEFITS.[cite: 3]</div>
+          <p><strong>Common Root Cause:</strong> Claim request dates precede the active effective coverage window for Medicare Part A benefits on the Common Working File[cite: 3].</p>
+          <p><strong>Technical Correction Protocol:</strong></p>
+          <ul>
+            <li>Execute an immediate query inside the secure regional Medicare eligibility system portal[cite: 3].</li>
+            <li>Verify the precise date beneficiary entitlement went into active effect[cite: 3].</li>
+            <li>If the patient entered mid-stay, split-bill: mark early days as non-covered, and start covered charges on the exact entitlement date[cite: 3].</li>
+          </ul>`;
+        break;
+
+      case 'W2067':
+        document.getElementById('th_fl44').classList.add('highlighted');
+        document.getElementById('fl44_line1').classList.add('highlighted');
+        infoBox.innerHTML = `
+          <h3>FISS Reason Code W2067: Inpatient Rehabilitation or Skilled Level Audit Warning[cite: 3]</h3>
+          <div class="system-text">CLINICAL DATA VALIDATION SUSPENDED DUE TO INTERIM ASSESSMENT INTERVAL DISCREPANCIES OR ADMISSION SCHEDULING.[cite: 3]</div>
+          <p><strong>Common Root Cause:</strong> An internal system conflict occurred where the sequence of submitted nursing and therapy indicators conflicts with historical clinical data on record[cite: 3].</p>
+          <p><strong>Technical Correction Protocol:</strong></p>
+          <ul>
+            <li>Audit patient continuous stay tracking history and identify any conflicting overlapping facility records[cite: 3].</li>
+            <li>Confirm clinical codes in <strong>FL 44</strong> correspond correctly with the MDS documentation file[cite: 3].</li>
+            <li>If an entry error occurred on the assessment, coordinate with MDS to transmit an amended document[cite: 3].</li>
+          </ul>`;
+        break;
+
+      case 'U5065':
+        document.getElementById('fl60').classList.add('highlighted');
+        infoBox.innerHTML = `
+          <h3>FISS Reason Code U5065: Inactive or Invalid Medicare Beneficiary Identifier (MBI)[cite: 3]</h3>
+          <div class="system-text">THE MBI EFFECTIVE OR END DATE IS NOT WITHIN THE CLAIM DATES OF SERVICE.[cite: 3]</div>
+          <p><strong>Common Root Cause:</strong> The alphanumeric MBI typed into the claim is wrong, deactivated, or updated due to a protective identity change[cite: 3].</p>
+          <p><strong>Technical Correction Protocol:</strong></p>
+          <ul>
+            <li>Log into the MAC eligibility portal to search using patient demographics[cite: 3].</li>
+            <li>Verify if a newly updated MBI string has been issued[cite: 3].</li>
+            <li>Replace the incorrect string in <strong>FL 60</strong> with the verified uppercase alphanumeric sequence[cite: 3].</li>
+            <li>If converted to a private Medicare Advantage plan, cancel this claim and route to the commercial carrier[cite: 3].</li>
+          </ul>`;
+        break;
+
+      case '31025':
+        document.getElementById('th_fl44').classList.add('highlighted');
+        document.getElementById('fl44_line2').classList.add('highlighted');
+        infoBox.innerHTML = `
+          <h3>FISS Reason Code 31025: Outpatient Therapy Cap Modifier / Discipline Error[cite: 3]</h3>
+          <div class="system-text">THERAPY CLAIM REQUIRES VALID THERAPY DISCIPLINE MODIFIER OR CRITICAL CAP THRESHOLD EXCEPTION VALIDATION INDICATORS.[cite: 3]</div>
+          <p><strong>Common Root Cause:</strong> Part B therapy lines (or non-covered Part A pathways) lack mandatory professional identifiers or medical necessity extensions[cite: 3].</p>
+          <p><strong>Technical Correction Protocol:</strong></p>
+          <ul>
+            <li>Review therapy line charges and attach professional modifiers in <strong>FL 44</strong>: GP (Physical), GO (Occupational), or GN (Speech)[cite: 3].</li>
+            <li>If expenditure levels exceed statutory caps, verify clinical notes establish ongoing medical necessity[cite: 3].</li>
+            <li>Append the KX modifier directly to the therapy code line to indicate medical necessity[cite: 3].</li>
+          </ul>`;
+        break;
+
+      case 'U5606':
+        document.getElementById('fl18_28').classList.add('highlighted');
+        document.getElementById('fl39_41').classList.add('highlighted');
+        infoBox.innerHTML = `
+          <h3>FISS Reason Code U5606: Hospice Overlap Mismatch Against SNF Claims[cite: 3]</h3>
+          <div class="system-text">BENEFICIARY IS REGISTERED UNDER AN ACTIVE HOSPICE ELECTION TIMELINE DURING BILLEDS DATE INTERVALS.[cite: 3]</div>
+          <p><strong>Common Root Cause:</strong> Patient is actively enrolled in an elected Medicare Hospice benefit, causing room-and-board claims sent directly to standard Part A to reject[cite: 3].</p>
+          <p><strong>Technical Correction Protocol:</strong></p>
+          <ul>
+            <li>Confirm whether SNF care provided is entirely separate from the patient's terminal hospice diagnosis[cite: 3].</li>
+            <li>If unrelated, apply Condition Code 07 in <strong>FL 18-28</strong> to indicate separate care[cite: 3].</li>
+            <li>Coordinate with the active hospice group to ensure proper split-billing or dual-reimbursement protocols[cite: 3].</li>
+          </ul>`;
+        break;
+
+      case '38007':
+        document.getElementById('fl4').classList.add('highlighted');
+        document.getElementById('fl6').classList.add('highlighted');
+        infoBox.innerHTML = `
+          <h3>FISS Reason Code 38007: Duplicate Claim Submission for Processed Window[cite: 3]</h3>
+          <div class="system-text">A CLAIM WITH THE IDENTICAL FIELD COMBINATION AND SERVICE WINDOW IS CURRENTLY COMPLETED OR ACTIVE IN SYSTEM ARCHIVES.[cite: 3]</div>
+          <p><strong>Common Root Cause:</strong> The billing team re-transmitted an entire institutional claim for dates matching a previously processed or paid claim window[cite: 3].</p>
+          <p><strong>Technical Correction Protocol:</strong></p>
+          <ul>
+            <li>Search system history records to see if the target statement period was already approved or paid[cite: 3].</li>
+            <li>If adjustments/late items must be submitted, use Type of Bill 217 (Replacement of Prior Claim) in <strong>FL 4</strong>[cite: 3].</li>
+            <li>Never send an exact duplicate 211 or 213 bill to bypass a standard delay[cite: 3].</li>
+          </ul>`;
+        break;
+
+      case '38200':
+        document.getElementById('fl6').classList.add('highlighted');
+        infoBox.innerHTML = `
+          <h3>FISS Reason Code 38200: Patient Stay Overlap / Conflicting Inpatient History[cite: 3]</h3>
+          <div class="system-text">BENEFICIARY COVERAGE DATES CONFLICT DIRECTLY WITH AN OPEN INPATIENT CLAIM ROUTED BY AN EXTERNAL SYSTEM HOSPITAL.[cite: 3]</div>
+          <p><strong>Common Root Cause:</strong> An external acute-care facility has an unclosed inpatient claim on file that overlaps with your SNF statement window[cite: 3].</p>
+          <p><strong>Technical Correction Protocol:</strong></p>
+          <ul>
+            <li>Check CWF to identify the specific conflicting hospital and their exact discharge dates[cite: 3].</li>
+            <li>If the patient was under outpatient observation status before admission, ensure that time is not billed as SNF covered time[cite: 3].</li>
+            <li>Contact hospital billing to finalize/correct discharge status fields, then adjust statement start date in <strong>FL 6</strong>[cite: 3].</li>
+          </ul>`;
+        break;
+
+      case '7RACA':
+        document.getElementById('th_fl44').classList.add('highlighted');
+        document.getElementById('fl44_line2').classList.add('highlighted');
+        infoBox.innerHTML = `
+          <h3>FISS Reason Code 7RACA: Invalid Telehealth / Distance Service Component Format[cite: 3]</h3>
+          <div class="system-text">SPECIALIZED VALUE CODES OR MODIFIER COMBINATIONS ARE REQUIRED FOR REMOTE INTERVENTIONS.[cite: 3]</div>
+          <p><strong>Common Root Cause:</strong> Specialized modifiers required for remote or telehealth evaluations (such as modifier 95 or FQ) are missing or misaligned with revenue lines[cite: 3].</p>
+          <p><strong>Technical Correction Protocol:</strong></p>
+          <ul>
+            <li>Review physician and auxiliary treatment entries on line items[cite: 3].</li>
+            <li>Verify proper remote delivery indicators are attached to HCPCS codes in <strong>FL 44</strong>[cite: 3].</li>
+            <li>Confirm clinical interaction aligns with regional telehealth coverage rules and press F9[cite: 3].</li>
+          </ul>`;
+        break;
+
+      case '39508':
+        document.getElementById('fl17').classList.add('highlighted');
+        infoBox.innerHTML = `
+          <h3>FISS Reason Code 39508: Discharge Status Code Mismatch Against Next Claim[cite: 3]</h3>
+          <div class="system-text">DISCHARGE DISPOSITION FIELD TERMINATES INTERIM CARE LOGIC BUT CONFLICTS WITH CONSECUTIVE BILL DATA ENTRIES.[cite: 3]</div>
+          <p><strong>Common Root Cause:</strong> Patient discharge status in FL 17 indicates transfer to a setting (like home), but subsequent claims show entry into a different facility type[cite: 3].</p>
+          <p><strong>Technical Correction Protocol:</strong></p>
+          <ul>
+            <li>Confirm exact location patient was discharged to on the final day of the statement period[cite: 3].</li>
+            <li>Update <strong>FL 17</strong> to match reality (03 for another SNF, 01 for home, 02 for acute hospital transfer)[cite: 3].</li>
+            <li>Ensure consistency between documentation and subsequent provider tracking records[cite: 3].</li>
+          </ul>`;
+        break;
+
+      case 'U5233':
+        document.getElementById('fl50').classList.add('highlighted');
+        document.getElementById('fl58').classList.add('highlighted');
+        infoBox.innerHTML = `
+          <h3>FISS Reason Code U5233: Medicare Advantage Enrollment Plan Conflict[cite: 3]</h3>
+          <div class="system-text">TRADITIONAL PART A SUBMISSIONS ARE REJECTED DUE TO BENEFICIARY ENROLLMENT IN A COMPREHENSIVE ADVANTAGE PLAN.[cite: 3]</div>
+          <p><strong>Common Root Cause:</strong> Claim sent to traditional Part A, but patient was enrolled in a private Managed Care or Medicare Advantage plan during dates of service[cite: 3].</p>
+          <p><strong>Technical Correction Protocol:</strong></p>
+          <ul>
+            <li>Run eligibility check on system portal for specific dates of service[cite: 3].</li>
+            <li>Identify specific private commercial insurance group or Medicare Advantage plan covering beneficiary[cite: 3].</li>
+            <li>Cancel traditional Medicare Part A claim in DDE and re-bill directly to the private commercial plan address (<strong>FL 50 / 58</strong>)[cite: 3].</li>
+          </ul>`;
+        break;
+
+      case '11503':
+        document.getElementById('fl4').classList.add('highlighted');
+        infoBox.innerHTML = `
+          <h3>FISS Reason Code 11503: Invalid Type of Bill Code Combination[cite: 3]</h3>
+          <div class="system-text">THE SUBMITTED FREQUENCY OR SYSTEM CODE DIGITS DO NOT MATCH REGISTRATION STANDARDS FOR INPATIENT CARE.[cite: 3]</div>
+          <p><strong>Common Root Cause:</strong> An invalid 3-digit Type of Bill sequence was submitted in FL 4 (e.g., incorrect or unauthorized combination for standard SNF stays)[cite: 3].</p>
+          <p><strong>Technical Correction Protocol:</strong></p>
+          <ul>
+            <li>Navigate to <strong>FL 4</strong> in the upper right quadrant of claim screen[cite: 3].</li>
+            <li>Verify standard SNF bill codes: 211 (Admit through Discharge), 212 (First Interim), 213 (Interim Continuing), or 214 (Last Interim)[cite: 3].</li>
+            <li>Correct typos or invalid digits and press F9[cite: 3].</li>
+          </ul>`;
+        break;
+
+      case '34540':
+        document.getElementById('fl18_28').classList.add('highlighted');
+        document.getElementById('fl39_41').classList.add('highlighted');
+        document.getElementById('fl50').classList.add('highlighted');
+        infoBox.innerHTML = `
+          <h3>FISS Reason Code 34540: Primary Worker's Compensation / Liability Claim Overlap[cite: 3]</h3>
+          <div class="system-text">AN OPEN LIABILITY OR WORKER'S COMPENSATION RECORD PROHIBITS PRIMARY REIMBURSEMENT PROCESSING.[cite: 3]</div>
+          <p><strong>Common Root Cause:</strong> Common Working File shows open liability or Worker's Comp claim, requiring those insurers to be billed before Medicare[cite: 3].</p>
+          <p><strong>Technical Correction Protocol:</strong></p>
+          <ul>
+            <li>If treatment is workplace-injury related, route claim to Worker's Comp carrier first[cite: 3].</li>
+            <li>If primary carrier delayed payment beyond 120 days, apply for conditional payment[cite: 3].</li>
+            <li>Enter Value Code 47 ($0.00) in <strong>FL 39-41</strong> and attach Condition Code 29 in <strong>FL 18-28</strong>[cite: 3].</li>
+          </ul>`;
+        break;
+
+      case '38307':
+        document.getElementById('fl35').classList.add('highlighted');
+        document.getElementById('fl36').classList.add('highlighted');
+        infoBox.innerHTML = `
+          <h3>FISS Reason Code 38307: Qualifying Inpatient Hospital Stay Mismatch[cite: 3]</h3>
+          <div class="system-text">THE REQUIRED 3-DAY ACUTE INPATIENT HOSPITAL ADMISSION TIMELINE CANNOT BE VERIFIED IN ACCOUNT ARCHIVES.[cite: 3]</div>
+          <p><strong>Common Root Cause:</strong> System cannot verify a preceding 3-day consecutive inpatient acute hospital stay prior to SNF admission[cite: 3].</p>
+          <p><strong>Technical Correction Protocol:</strong></p>
+          <ul>
+            <li>Check hospital records to confirm patient status was inpatient, not observation status[cite: 3].</li>
+            <li>Navigate to <strong>FL 35/36</strong> and add Occurrence Span Code 70 along with exact qualifying hospital stay dates (must tally at least 3 midnights)[cite: 3].</li>
+            <li>If hospital incorrectly billed observation time, coordinate with them to update claim status fields[cite: 3].</li>
+          </ul>`;
+        break;
+
+      case 'C7010':
+        document.getElementById('th_fl44').classList.add('highlighted');
+        document.getElementById('fl44_line2').classList.add('highlighted');
+        infoBox.innerHTML = `
+          <h3>FISS Reason Code C7010: Preventative Service Multi-Line Coding Conflict[cite: 3]</h3>
+          <div class="system-text">LINE ITEM EXCLUSIONS ENCOUNTERED DUE TO SIMULTANEOUS BANNED INTERVENTIONS LOGGED ON IDENTICAL DATES.[cite: 3]</div>
+          <p><strong>Common Root Cause:</strong> Multiple conflicting procedure codes or services billed for the exact same date of service, violating bundling and editing rules[cite: 3].</p>
+          <p><strong>Technical Correction Protocol:</strong></p>
+          <ul>
+            <li>Review detailed line-item service dates to identify overlapping or bundled codes[cite: 3].</li>
+            <li>Separate charges or apply proper modifiers (such as modifier 59) in <strong>FL 44</strong> if services were distinct and independent[cite: 3].</li>
+            <li>Remove accidentally duplicated or bundled charges from revenue lines[cite: 3].</li>
+          </ul>`;
+        break;
+
+      case 'U5235':
+        document.getElementById('fl4').classList.add('highlighted');
+        document.getElementById('fl50').classList.add('highlighted');
+        infoBox.innerHTML = `
+          <h3>FISS Reason Code U5235: Medicare Part B Only Enrollment Plan Conflict[cite: 3]</h3>
+          <div class="system-text">INPATIENT PART A SERVICES IS NOT COVERED BECAUSE PATIENT ONLY HOLDS OUTPATIENT PART B INSURANCE BENEFITS.[cite: 3]</div>
+          <p><strong>Common Root Cause:</strong> Patient is only enrolled in Medicare Part B (outpatient) benefits, causing full Part A SNF inpatient room-and-board claims to reject[cite: 3].</p>
+          <p><strong>Technical Correction Protocol:</strong></p>
+          <ul>
+            <li>Verify patient insurance benefit allocation within eligibility portal[cite: 3].</li>
+            <li>Change Type of Bill code in <strong>FL 4</strong> to 221 or 222 (Inpatient Part B ancillary services claim)[cite: 3].</li>
+            <li>Remove full room-and-board charges (Revenue Code 012x/0022) and only bill eligible ancillary services (e.g., therapy, labs)[cite: 3].</li>
+          </ul>`;
+        break;
+    }
+  }
+</script>
+
+</body>
+</html>
